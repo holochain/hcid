@@ -1,7 +1,6 @@
 [package]
 name = "hcid"
-version = "0.1.0"
-authors = ["neonphog <neonphog@gmail.com>"]
+version = "0.0.1"
 edition = "2018"
 
 [dependencies]
