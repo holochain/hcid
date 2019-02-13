@@ -5,15 +5,24 @@ mod error;
 pub use error::HcidError;
 
 mod util;
-use util::{
-    cap_decode,
-    b32_correct,
-    char_upper,
-    cap_encode_bin,
-};
+use util::{b32_correct, cap_decode, cap_encode_bin, char_upper};
 
 /// hcid Result type
 pub type HcidResult<T> = Result<T, HcidError>;
+
+/// create a hck0 encoding instance
+/// version zero of keys prefixed with `HcK`
+pub fn with_hck0() -> HcidResult<HcidEncoding> {
+    HcidEncoding::new(HcidEncodingConfig {
+        key_byte_count: 32,
+        base_parity_byte_count: 4,
+        cap_parity_byte_count: 4,
+        prefix: vec![0x38, 0x94, 0x24],
+        prefix_cap: b"101".to_vec(),
+        cap_segment_char_count: 15,
+        encoded_char_count: 63,
+    })
+}
 
 /// represents an encoding configuration for hcid rendering and parsing
 pub struct HcidEncodingConfig {
@@ -67,22 +76,16 @@ impl HcidEncoding {
         })
     }
 
-    /// create a hck0 encoding instance
-    /// version zero of keys prefixed with `HcK`
-    pub fn with_hck0() -> HcidResult<HcidEncoding> {
-        Self::new(HcidEncodingConfig {
-            key_byte_count: 32,
-            base_parity_byte_count: 4,
-            cap_parity_byte_count: 4,
-            prefix: vec![0x38, 0x94, 0x24],
-            prefix_cap: b"101".to_vec(),
-            cap_segment_char_count: 15,
-            encoded_char_count: 63,
-        })
-    }
-
     /// encode a string to base32 with this instance's configuration
     pub fn encode(&self, data: &[u8]) -> HcidResult<String> {
+        if data.len() != self.config.key_byte_count {
+            return Err(HcidError(String::from(format!(
+                "BadDataLen:{},Expected:{}",
+                data.len(),
+                self.config.key_byte_count
+            ))));
+        }
+
         // generate reed-solomon parity bytes
         let full_parity = self.rs_enc.encode(data);
 
@@ -97,6 +100,14 @@ impl HcidEncoding {
 
         // do the base32 encoding
         let mut base32 = self.b32.encode(&base).into_bytes();
+
+        if base32.len() != self.config.encoded_char_count {
+            return Err(HcidError(String::from(format!(
+                "InternalGeneratedBadLen:{},Expected:{}",
+                base32.len(),
+                self.config.encoded_char_count
+            ))));
+        }
 
         // capitalize the prefix with a fixed scheme
         cap_encode_bin(
@@ -126,19 +137,44 @@ impl HcidEncoding {
         // get our parsed data with erasures
         let (data, erasures) = self.pre_decode(data)?;
 
-        // apply reed-solomon correction
-        // will "throw" on too many errors
-        let data = self.rs_dec.correct(&data, Some(&erasures[..]))?;
+        if erasures.len() >= self.config.base_parity_byte_count + self.config.cap_parity_byte_count
+        {
+            // our reed-solomon library makes bad corrections once
+            // erasure count equals parity count.
+            return Err(HcidError(String::from("TooManyErrors")));
+        }
 
-        // return byte-length of data
-        Ok(data[0..self.config.key_byte_count].to_vec())
+        // optimise for the case where there are no transcription errors
+        // this makes correcting more expensive if there *are*,
+        // but on average makes the system more efficient
+        if self.pre_is_corrupt(&data, &erasures)? {
+            // apply reed-solomon correction
+            // will "throw" on too many errors
+            Ok(
+                self.rs_dec.correct(&data, Some(&erasures[..]))?[0..self.config.key_byte_count]
+                    .to_vec(),
+            )
+        } else {
+            Ok(data[0..self.config.key_byte_count].to_vec())
+        }
     }
 
     /// a lighter-weight check to determine if a base32 string is corrupt
     pub fn is_corrupt(&self, data: &str) -> HcidResult<bool> {
         // get our parsed data with erasures
-        let (data, erasures) = self.pre_decode(data)?;
+        let (data, erasures) = match self.pre_decode(data) {
+            Ok(v) => v,
+            Err(_) => return Ok(true),
+        };
 
+        match self.pre_is_corrupt(&data, &erasures) {
+            Ok(v) => Ok(v),
+            Err(_) => Ok(true),
+        }
+    }
+
+    /// internal helper for is_corrupt checking
+    fn pre_is_corrupt(&self, data: &[u8], erasures: &[u8]) -> HcidResult<bool> {
         // if we have any erasures, we can exit early
         if erasures.len() > 0 {
             return Ok(true);
@@ -150,8 +186,16 @@ impl HcidEncoding {
 
     /// internal helper for preparing decoding
     fn pre_decode(&self, data: &str) -> HcidResult<(Vec<u8>, Vec<u8>)> {
+        if data.len() != self.config.encoded_char_count {
+            return Err(HcidError(String::from(format!(
+                "BadIdLen:{},Expected:{}",
+                data.len(),
+                self.config.encoded_char_count
+            ))));
+        }
+
         let key_byte_size = self.config.key_byte_count + self.config.base_parity_byte_count;
-        let mut byte_erasures = vec![b'0'; key_byte_size];
+        let mut byte_erasures = vec![b'0'; key_byte_size + self.config.cap_parity_byte_count];
         let mut char_erasures = vec![b'0'; data.len()];
 
         // correct any transliteration errors into our base32 alphabet
@@ -178,6 +222,12 @@ impl HcidEncoding {
 
         // do the base32 decode
         let mut data = self.b32.decode(&data)?;
+
+        if &data[0..self.config.prefix.len()] != self.config.prefix.as_slice() {
+            return Err(HcidError(String::from("PrefixMismatch")));
+        }
+
+        // remove the prefix
         for _i in 0..self.config.prefix_cap.len() {
             data.remove(0);
         }
@@ -188,19 +238,18 @@ impl HcidEncoding {
         // sort through the char-level erasures (5 bits)
         // associate them with byte-level data (8 bits)
         // so that we mark the proper erasures for reed-solomon correction
+        // some of these chars span multiple bytes... we need to mark both
         for i in self.config.prefix_cap.len()..char_erasures.len() {
             let c = char_erasures[i];
-            let byte_idx = (i as f64 - self.config.prefix_cap.len() as f64) * 5.0 / 8.0;
-            let floor = byte_idx.floor() as usize;
             if c == b'1' {
-                byte_erasures[floor] = b'1';
-            }
-            let ceil = byte_idx.ceil() as usize;
-            if ceil >= self.config.key_byte_count + self.config.base_parity_byte_count {
-                break;
-            }
-            if c == b'1' {
-                byte_erasures[ceil] = b'1';
+                let byte_idx_min =
+                    ((i as f64 - self.config.prefix_cap.len() as f64) * 5.0 / 8.0).floor() as usize;
+                byte_erasures[byte_idx_min] = b'1';
+
+                let byte_idx_max = (((i + 1) as f64 - self.config.prefix_cap.len() as f64) * 5.0
+                    / 8.0)
+                    .floor() as usize;
+                byte_erasures[byte_idx_max] = b'1';
             }
         }
 
@@ -208,6 +257,7 @@ impl HcidEncoding {
         let mut erasures: Vec<u8> = Vec::new();
         for i in 0..byte_erasures.len() {
             if byte_erasures[i] == b'1' {
+                data[i] = 0;
                 erasures.push(i as u8);
             }
         }
@@ -229,7 +279,7 @@ mod tests {
 
     #[test]
     fn it_encodes_1() {
-        let enc = HcidEncoding::with_hck0().unwrap();
+        let enc = with_hck0().unwrap();
 
         let input = hex.decode(TEST_HEX_1.as_bytes()).unwrap();
         let id = enc.encode(&input).unwrap();
@@ -238,7 +288,7 @@ mod tests {
 
     #[test]
     fn it_decodes_1() {
-        let enc = HcidEncoding::with_hck0().unwrap();
+        let enc = with_hck0().unwrap();
 
         let data = hex.encode(&enc.decode(TEST_ID_1).unwrap());
         assert_eq!(TEST_HEX_1, data);

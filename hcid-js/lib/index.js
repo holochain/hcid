@@ -11,7 +11,7 @@ function txError (fn) {
 }
 
 function checkFixBuffer (buf) {
-  if (typeof Buffer === 'function') {
+  if (typeof Buffer === 'function' && buf instanceof Buffer) {
     return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength)
   }
   return buf
