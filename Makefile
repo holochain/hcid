@@ -6,7 +6,7 @@ all: build
 
 test: build
 	cargo test -p hcid
-	cd hcid-js && npm test
+	cd hcid-js && (which node_modules/.bin/standard || npm ci) && npm test
 
 tools:
 	rustup override set nightly-2019-01-24
