@@ -1,7 +1,14 @@
 [package]
 name = "hcid"
-version = "0.0.1"
+version = "0.0.3-alpha"
 edition = "2018"
+description = "Holochain base32 encoding scheme for keys, agents, identifiers, etc"
+keywords = ["base32", "encoding", "decoding", "erasure", "reed-solomon"]
+categories = ["encoding"]
+license = "Apache-2.0"
+readme = "README.md"
+documentation = "https://docs.rs/hcid"
+repository = "https://github.com/holochain/hcid"
 
 [dependencies]
 data-encoding = "=2.1.2"

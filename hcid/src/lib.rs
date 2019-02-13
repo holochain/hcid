@@ -44,14 +44,17 @@ pub struct HcidEncoding {
 impl HcidEncoding {
     /// create a new HcidEncoding instance from given HcidEncodingConfig
     pub fn new(config: HcidEncodingConfig) -> HcidResult<Self> {
+        // set up a base32 encoder for our holo alphabet
         let mut spec = data_encoding::Specification::new();
         spec.symbols.push_str("ABCDEFGHIJKMNOPQRSTUVWXYZ3456789");
         let b32 = spec.encoding()?;
 
+        // set up a reed-solomon encoder with proper parity count
         let rs_enc = reed_solomon::Encoder::new(
             config.base_parity_byte_count + config.cap_parity_byte_count,
         );
 
+        // set up a reed-solomon decoder with proper parity count
         let rs_dec = reed_solomon::Decoder::new(
             config.base_parity_byte_count + config.cap_parity_byte_count,
         );
@@ -65,6 +68,7 @@ impl HcidEncoding {
     }
 
     /// create a hck0 encoding instance
+    /// version zero of keys prefixed with `HcK`
     pub fn with_hck0() -> HcidResult<HcidEncoding> {
         Self::new(HcidEncodingConfig {
             key_byte_count: 32,
@@ -119,21 +123,28 @@ impl HcidEncoding {
 
     /// decode the data from a base32 string with this instance's configuration
     pub fn decode(&self, data: &str) -> HcidResult<Vec<u8>> {
+        // get our parsed data with erasures
         let (data, erasures) = self.pre_decode(data)?;
 
+        // apply reed-solomon correction
+        // will "throw" on too many errors
         let data = self.rs_dec.correct(&data, Some(&erasures[..]))?;
 
+        // return byte-length of data
         Ok(data[0..self.config.key_byte_count].to_vec())
     }
 
     /// a lighter-weight check to determine if a base32 string is corrupt
     pub fn is_corrupt(&self, data: &str) -> HcidResult<bool> {
+        // get our parsed data with erasures
         let (data, erasures) = self.pre_decode(data)?;
 
+        // if we have any erasures, we can exit early
         if erasures.len() > 0 {
             return Ok(true);
         }
 
+        // slightly more efficient reed-solomon corruption check
         Ok(self.rs_dec.is_corrupted(&data))
     }
 
@@ -143,8 +154,11 @@ impl HcidEncoding {
         let mut byte_erasures = vec![b'0'; key_byte_size];
         let mut char_erasures = vec![b'0'; data.len()];
 
+        // correct any transliteration errors into our base32 alphabet
+        // marking any unrecognizable characters as char-level erasures
         let mut data = b32_correct(data.as_bytes(), &mut char_erasures);
 
+        // pull out the parity data that was encoded as capitalization
         let mut cap_bytes: Vec<u8> = Vec::new();
         for i in 0..self.config.cap_parity_byte_count {
             let char_idx = self.config.prefix_cap.len() + (i * self.config.cap_segment_char_count);
@@ -157,16 +171,23 @@ impl HcidEncoding {
             )?);
         }
 
+        // we have the cap data, uppercase everything
         for c in data.iter_mut() {
             char_upper(c);
         }
 
+        // do the base32 decode
         let mut data = self.b32.decode(&data)?;
         for _i in 0..self.config.prefix_cap.len() {
             data.remove(0);
         }
+
+        // append our cap parity bytes
         data.append(&mut cap_bytes);
 
+        // sort through the char-level erasures (5 bits)
+        // associate them with byte-level data (8 bits)
+        // so that we mark the proper erasures for reed-solomon correction
         for i in self.config.prefix_cap.len()..char_erasures.len() {
             let c = char_erasures[i];
             let byte_idx = (i as f64 - self.config.prefix_cap.len() as f64) * 5.0 / 8.0;
@@ -183,6 +204,7 @@ impl HcidEncoding {
             }
         }
 
+        // translate erasures into the form expected by our reed-solomon lib
         let mut erasures: Vec<u8> = Vec::new();
         for i in 0..byte_erasures.len() {
             if byte_erasures[i] == b'1' {
