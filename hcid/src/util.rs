@@ -10,6 +10,8 @@ pub fn cap_decode(
     byte_erasures: &mut Vec<u8>,
 ) -> HcidResult<u8> {
     let mut bin = String::new();
+
+    // iterate over input data
     for i in 0..data.len() {
         if char_erasures[char_offset + i] == b'1' {
             // parity byte will be marked as an erasure
@@ -21,20 +23,29 @@ pub fn cap_decode(
 
         // is alpha
         if c >= b'A' && c <= b'Z' {
+            // uppercase = bit on
             bin.push('1');
         } else if c >= b'a' && c <= b'z' {
+            // lowercase = bit off
             bin.push('0');
         }
+
+        // we have our 8 bits! proceed
         if bin.len() >= 8 {
             break;
         }
     }
 
+    // we did not get a full byte IF
+    //  - we don't have 8 bits
+    //  - either all caps or all lower case, assume the casing was lost
+    //    (i.e. QR code, or dns segment)
     if bin.len() < 8 || &bin == "11111111" || &bin == "00000000" {
         byte_erasures[byte_offset] = b'1';
         return Ok(0);
     }
 
+    // parse the bin as a u8
     Ok(u8::from_str_radix(&bin, 2)?)
 }
 
@@ -52,6 +63,8 @@ pub fn b32_correct(data: &[u8], char_erasures: &mut Vec<u8>) -> Vec<u8> {
             b'2' => b'Z',
             b'A'..=b'Z' | b'a'..=b'z' | b'3'..=b'9' => data[i],
             _ => {
+                // we cannot translate this character
+                // mark it as an erasure... see if we can continue
                 char_erasures[i] = b'1';
                 b'A'
             }
@@ -91,14 +104,18 @@ pub fn cap_encode_bin(seg: &mut [u8], bin: &[u8], min: usize) -> HcidResult<()> 
             count += 1;
             // is 1
             if bin[bin_idx] == b'1' {
+                // the bit is on: uppercase
                 char_upper(c);
             } else {
+                // the bit is off: lowercase
                 char_lower(c);
             }
             bin_idx += 1;
         }
     }
     if count < min {
+        // not enough alpha characters to encode the min
+        // mark everything as lower
         for c in seg.iter_mut() {
             char_lower(c);
         }

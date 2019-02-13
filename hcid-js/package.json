@@ -1,6 +1,6 @@
 {
   "name": "@holochain/hcid-js",
-  "version": "0.0.5",
+  "version": "0.0.3-alpha",
   "description": "javascript (wasm) build for rust Holochain base32 encoding scheme for keys, agents, identifiers, etc",
   "main": "lib/index.js",
   "license": "Apache-2.0",
@@ -8,6 +8,13 @@
     "type": "git",
     "url": "https://github.com/holochain/hcid.git"
   },
+  "keywords": [
+    "base32",
+    "encoding",
+    "decoding",
+    "erasure",
+    "reed-solomon"
+  ],
   "dependencies": {},
   "scripts": {
     "test": "standard lib/*.js && mocha lib/*.test.js"

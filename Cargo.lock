@@ -10,7 +10,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "hcid"
-version = "0.0.1"
+version = "0.0.3-alpha"
 dependencies = [
  "data-encoding 2.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "reed-solomon 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -18,9 +18,9 @@ dependencies = [
 
 [[package]]
 name = "hcid_js"
-version = "0.0.1"
+version = "0.0.3-alpha"
 dependencies = [
- "hcid 0.0.1",
+ "hcid 0.0.3-alpha",
  "wasm-bindgen 0.2.33 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
