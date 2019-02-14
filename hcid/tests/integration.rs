@@ -11,7 +11,9 @@ static FIXTURES: &'static str = include_str!("../../test/fixtures.json");
 
 fn test_correct(e: &hcid::HcidEncoding, id: &str, data: &[u8]) {
     assert!(!e.is_corrupt(id).unwrap());
-    let r = e.decode(id).unwrap();
+    let r = e.decode(id)
+        .unwrap_or_else(|err| panic!(format!(
+            "correct test of {} failed: {:?}", id, err)));
     assert_eq!(data, r.as_slice());
     let r = e.encode(data).unwrap();
     assert_eq!(id, r);
@@ -19,7 +21,9 @@ fn test_correct(e: &hcid::HcidEncoding, id: &str, data: &[u8]) {
 
 fn test_correctable(e: &hcid::HcidEncoding, id: &str, data: &[u8], correct_id: &str) {
     assert!(e.is_corrupt(id).unwrap());
-    let r = e.decode(id).unwrap();
+    let r = e.decode(id)
+        .unwrap_or_else(|err| panic!(format!(
+            "correctable test of {} failed: {:?}", id, err)));
     assert_eq!(data, r.as_slice());
     let r = e.encode(&r).unwrap();
     assert_eq!(correct_id, r);
