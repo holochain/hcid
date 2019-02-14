@@ -1,6 +1,6 @@
 SHELL		= /bin/bash
 
-.PHONY: all version test build install clean
+.PHONY: all test tools build clean
 
 all: build
 
