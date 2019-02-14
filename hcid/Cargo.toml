@@ -1,6 +1,6 @@
 [package]
 name = "hcid"
-authors = []
+authors = ["neonphog"]
 version = "0.0.3-alpha"
 edition = "2018"
 description = "Holochain base32 encoding scheme for keys, agents, identifiers, etc"
