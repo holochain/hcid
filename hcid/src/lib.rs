@@ -163,7 +163,7 @@ impl HcidEncoding {
             let bin = format!("{:08b}", cap_bytes[i]).into_bytes();
             cap_encode_bin(seg, &bin, 8)?;
         }
-
+        
         // we only use ascii characters
         // use unchecked for performance / so we don't allocate again
         unsafe {
@@ -172,15 +172,16 @@ impl HcidEncoding {
         }
     }
 
-    /// decode the data from a base32 string with this instance's configuration
+    /// decode the data from a base32 string with this instance's configuration.  Reed-Solomon can
+    /// correct up to 1/2 its parity size worth of erasures (if no other errors are present).
     pub fn decode(&self, data: &str) -> HcidResult<Vec<u8>> {
         // get our parsed data with erasures
         let (data, erasures) = self.pre_decode(data)?;
 
-        if erasures.len() >= self.config.base_parity_byte_count + self.config.cap_parity_byte_count
-        {
-            // our reed-solomon library makes bad corrections once
-            // erasure count equals parity count.
+        if erasures.len() > ( self.config.base_parity_byte_count + self.config.cap_parity_byte_count ) / 2 {
+            // our reed-solomon library makes bad corrections once erasure count exceeds 1/2 the
+            // parity count (it takes 2 parity symbols to find/correct one error, 1 parity symbol to
+            // correct a known erasure)
             return Err(HcidError(String::from("TooManyErrors")));
         }
 
@@ -282,7 +283,7 @@ impl HcidEncoding {
         // if we had no R-S parity at all.
         if all_zro || all_one {
             for i in 0..self.config.cap_parity_byte_count {
-                byte_erasures[key_base_byte_size + i - self.config.prefix.len()] = b'1';
+                byte_erasures[key_base_byte_size + i] = b'1';
             }
         }
 
