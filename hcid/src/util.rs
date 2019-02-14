@@ -1,20 +1,20 @@
 use super::HcidResult;
 
-/// pull parity bytes out that were encoded as capitalization
-/// translate character-level erasures into byte-level erasures
+/// Pull parity bytes out that were encoded as capitalization, translate character-level erasures
+/// into byte-level erasures of R-S parity symbols.  Any erasures in the capitalizataion-encoded
+/// parity result in a missing byte indication.  All {char,byte}_erasures are indexed from the 0th
+/// char/byte of the original full codeword, including prefix.  Returns None (erasure) or u8 value.
 pub fn cap_decode(
     char_offset: usize,
-    byte_offset: usize,
     data: &[u8],
-    char_erasures: &mut Vec<u8>,
-    byte_erasures: &mut Vec<u8>,
-) -> HcidResult<u8> {
+    char_erasures: &Vec<u8>,
+) -> HcidResult<Option<u8>> {
     let mut bin = String::new();
 
     // iterate over input data
     for i in 0..data.len() {
         if char_erasures[char_offset + i] == b'1' {
-            // parity byte will be marked as an erasure
+            // If char is known to be lost, parity byte will be marked as an erasure
             bin.clear();
             break;
         }
@@ -36,17 +36,13 @@ pub fn cap_decode(
         }
     }
 
-    // we did not get a full byte IF
-    //  - we don't have 8 bits
-    //  - either all caps or all lower case, assume the casing was lost
-    //    (i.e. QR code, or dns segment)
-    if bin.len() < 8 || &bin == "11111111" || &bin == "00000000" {
-        byte_erasures[byte_offset] = b'1';
-        return Ok(0);
+    // We did not get a full byte iff we don't have 8 bits.  Later (when the caller has all decoded
+    // parity), it should be determined if they are all 1's/0's, indicating capitalization is lost.
+    if bin.len() < 8 {
+        Ok(None)
+    } else {
+        Ok(Some(u8::from_str_radix(&bin, 2)?))
     }
-
-    // parse the bin as a u8
-    Ok(u8::from_str_radix(&bin, 2)?)
 }
 
 /// correct and transliteration faults
@@ -58,8 +54,7 @@ pub fn b32_correct(data: &[u8], char_erasures: &mut Vec<u8>) -> Vec<u8> {
     for i in 0..len {
         out.push(match data[i] {
             b'0' => b'O',
-            b'1' | b'L' => b'I',
-            b'l' => b'i',
+            b'1' | b'l' | b'L' => b'I',
             b'2' => b'Z',
             b'A'..=b'Z' | b'a'..=b'z' | b'3'..=b'9' => data[i],
             _ => {
@@ -77,14 +72,14 @@ pub fn b32_correct(data: &[u8], char_erasures: &mut Vec<u8>) -> Vec<u8> {
 /// modify a character to be ascii upper-case in-place
 pub fn char_lower(c: &mut u8) {
     if *c >= b'A' && *c <= b'Z' {
-        *c = *c + 32;
+        *c ^= 32;
     }
 }
 
 /// modify a character to be ascii lower-case in-place
 pub fn char_upper(c: &mut u8) {
     if *c >= b'a' && *c <= b'z' {
-        *c = *c - 32;
+        *c ^= 32;
     }
 }
 

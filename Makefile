@@ -5,7 +5,7 @@ SHELL		= /bin/bash
 all: build
 
 test: build
-	cargo test -p hcid
+	RUST_BACKTRACE=1 cargo test -p hcid
 	cd hcid-js && (which node_modules/.bin/standard || npm ci) && npm test
 
 tools:

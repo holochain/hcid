@@ -68,9 +68,9 @@ pub fn with_hcs0() -> HcidResult<HcidEncoding> {
 pub struct HcidEncodingConfig {
     /// byte count of actuall key data that will be encoded
     pub key_byte_count: usize,
-    /// parity bytes that will be encoded directly into the base32 string
+    /// parity bytes that will be encoded directly into the base32 string (appended after key)
     pub base_parity_byte_count: usize,
-    /// parity bytes that will be encoded in the alpha capitalization
+    /// parity bytes that will be encoded in the alpha capitalization (appended after base parity)
     pub cap_parity_byte_count: usize,
     /// bytes to prefix before rendering to base32
     pub prefix: Vec<u8>,
@@ -234,25 +234,56 @@ impl HcidEncoding {
             ))));
         }
 
-        let key_byte_size = self.config.key_byte_count + self.config.base_parity_byte_count;
-        let mut byte_erasures = vec![b'0'; key_byte_size + self.config.cap_parity_byte_count];
+        let key_base_byte_size = self.config.key_byte_count + self.config.base_parity_byte_count;
+        // All char_erasures are indexed from the 0th char of the full codeword w/ prefix, but
+        // byte_erasures are indexed from the 0th byte of the key+parity (ie. without the prefix).
+        // Any byte of key, or base/cap parity could be erased.
+        let mut byte_erasures = vec![b'0'; key_base_byte_size + self.config.cap_parity_byte_count];
         let mut char_erasures = vec![b'0'; data.len()];
 
         // correct any transliteration errors into our base32 alphabet
         // marking any unrecognizable characters as char-level erasures
         let mut data = b32_correct(data.as_bytes(), &mut char_erasures);
 
-        // pull out the parity data that was encoded as capitalization
+        // Pull out the parity data that was encoded as capitalization.  If its erasure,
+        // determine the 
         let mut cap_bytes: Vec<u8> = Vec::new();
+        let mut all_zro = true;
+        let mut all_one = true;
         for i in 0..self.config.cap_parity_byte_count {
+            // For cap. parity, indexing starts after pre-defined Base-32 prefix
             let char_idx = self.config.prefix_cap.len() + (i * self.config.cap_segment_char_count);
-            cap_bytes.push(cap_decode(
+            match cap_decode(
                 char_idx,
-                key_byte_size + i,
                 &data[char_idx..char_idx + self.config.cap_segment_char_count],
-                &mut char_erasures,
-                &mut byte_erasures,
-            )?);
+                &char_erasures
+            )? {
+                None => {
+                    byte_erasures[key_base_byte_size + i] = b'1';
+                    cap_bytes.push(0)
+                }
+                Some(parity) => {
+                    if all_zro && parity != 0x00_u8 {
+                        all_zro = false
+                    }
+                    if all_one && parity != 0xFF_u8 {
+                        all_one = false
+                    }
+                    cap_bytes.push(parity)
+                }
+            }
+        }
+
+        // If either all caps or all lower case (or erasure), assume the casing was lost (eg. QR
+        // code, or dns segment); mark all cap-derived parity as erasures.  This allows validation
+        // of codeword if all remaining parity is intact and key is correct; since no parity
+        // capacity remains, no correction will be attempted.  There is only a low probability that
+        // any remaining errors will be detected, in this case.  However, we're no *worse* off than
+        // if we had no R-S parity at all.
+        if all_zro || all_one {
+            for i in 0..self.config.cap_parity_byte_count {
+                byte_erasures[key_base_byte_size + i - self.config.prefix.len()] = b'1';
+            }
         }
 
         // we have the cap data, uppercase everything
@@ -267,29 +298,21 @@ impl HcidEncoding {
             return Err(HcidError(String::from("PrefixMismatch")));
         }
 
-        // remove the prefix
-        for _i in 0..self.config.prefix_cap.len() {
-            data.remove(0);
-        }
+        // remove the prefix bytes
+        data.drain(0..self.config.prefix.len());
 
         // append our cap parity bytes
         data.append(&mut cap_bytes);
 
-        // sort through the char-level erasures (5 bits)
-        // associate them with byte-level data (8 bits)
-        // so that we mark the proper erasures for reed-solomon correction
-        // some of these chars span multiple bytes... we need to mark both
+        // Sort through the char-level erasures (5 bits), and associate them with byte-level data (8
+        // bits) -- in the (now prefix-free) data buffer, so that we mark the proper erasures for
+        // reed-solomon correction.  Some of these chars span multiple bytes... we need to mark both.
         for i in self.config.prefix_cap.len()..char_erasures.len() {
             let c = char_erasures[i];
             if c == b'1' {
-                let byte_idx_min =
-                    ((i as f64 - self.config.prefix_cap.len() as f64) * 5.0 / 8.0).floor() as usize;
-                byte_erasures[byte_idx_min] = b'1';
-
-                let byte_idx_max = (((i + 1) as f64 - self.config.prefix_cap.len() as f64) * 5.0
-                    / 8.0)
-                    .floor() as usize;
-                byte_erasures[byte_idx_max] = b'1';
+                // 1st and last bit of 5-bit segment may index different bytes
+                byte_erasures[( i * 5 + 0 ) / 8 - self.config.prefix.len()] = b'1';
+                byte_erasures[( i * 5 + 4 ) / 8 - self.config.prefix.len()] = b'1';
             }
         }
 
@@ -301,6 +324,7 @@ impl HcidEncoding {
                 erasures.push(i as u8);
             }
         }
+        println!("Erasures: {:?}", erasures);
 
         Ok((data, erasures))
     }
