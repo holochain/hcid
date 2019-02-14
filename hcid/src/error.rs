@@ -1,6 +1,6 @@
 /// a simple struct(String) for reporting hcid errors
 #[derive(Debug, PartialEq, Clone)]
-pub struct HcidError(String);
+pub struct HcidError(pub String);
 
 impl std::fmt::Display for HcidError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
