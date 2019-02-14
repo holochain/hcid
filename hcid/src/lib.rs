@@ -325,7 +325,6 @@ impl HcidEncoding {
                 erasures.push(i as u8);
             }
         }
-        println!("Erasures: {:?}", erasures);
 
         Ok((data, erasures))
     }
