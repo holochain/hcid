@@ -75,5 +75,59 @@
         "HcidError(\"BadDataLen:31,Expected:32\")"
       ]
     ]
+  },
+  "hca0": {
+    "correct": [
+      [
+        "HcAciDds5OiogymxbnHKEabQ8iavqs8dwdVaGdJW76Vp4gx47tQDfGW4OWc9w5i",
+        "0c71db50d35d760b0ea2002ff20147c7c3a8e8030d35ef28ed1adaec9e329aba"
+      ]
+    ],
+    "correctable": [
+      [
+        "HcAciDds_OiogymxbnHKEabQ8iavqs8dwdVaGdJW76Vp4gx47tQDfGW4OWc9w5i",
+        "0c71db50d35d760b0ea2002ff20147c7c3a8e8030d35ef28ed1adaec9e329aba",
+        "HcAciDds5OiogymxbnHKEabQ8iavqs8dwdVaGdJW76Vp4gx47tQDfGW4OWc9w5i"
+      ]
+    ],
+    "errantId": [
+      [
+        "HcAciDds_Oiog_mxb_HKEabQ8iavqs8dwdVaGdJW76Vp4gx47tQDfGW4O_c9w5i",
+        "HcidError(\"TooManyErrors\")"
+      ]
+    ],
+    "errantData": [
+      [
+        "0c71db50d35d760b0ea2002ff20147c7c3a8e8030d35ef28ed1adaec9e329a",
+        "HcidError(\"BadDataLen:31,Expected:32\")"
+      ]
+    ]
+  },
+  "hcs0": {
+    "correct": [
+      [
+        "HcSciDds5OiogymxbnHKEabQ8iavqs8dwdVaGdJW76Vp4gx47tQDfGW4OWc9w5i",
+        "0c71db50d35d760b0ea2002ff20147c7c3a8e8030d35ef28ed1adaec9e329aba"
+      ]
+    ],
+    "correctable": [
+      [
+        "HcSciDds_OiogymxbnHKEabQ8iavqs8dwdVaGdJW76Vp4gx47tQDfGW4OWc9w5i",
+        "0c71db50d35d760b0ea2002ff20147c7c3a8e8030d35ef28ed1adaec9e329aba",
+        "HcSciDds5OiogymxbnHKEabQ8iavqs8dwdVaGdJW76Vp4gx47tQDfGW4OWc9w5i"
+      ]
+    ],
+    "errantId": [
+      [
+        "HcSciDds_Oiog_mxb_HKEabQ8iavqs8dwdVaGdJW76Vp4gx47tQDfGW4O_c9w5i",
+        "HcidError(\"TooManyErrors\")"
+      ]
+    ],
+    "errantData": [
+      [
+        "0c71db50d35d760b0ea2002ff20147c7c3a8e8030d35ef28ed1adaec9e329a",
+        "HcidError(\"BadDataLen:31,Expected:32\")"
+      ]
+    ]
   }
 }

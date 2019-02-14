@@ -22,6 +22,8 @@ impl Encoding {
     pub fn new(encoding_name: &str) -> JsResult<Encoding> {
         match encoding_name {
             "hck0" => Ok(Encoding(jserr!(hcid::with_hck0())?)),
+            "hca0" => Ok(Encoding(jserr!(hcid::with_hca0())?)),
+            "hcs0" => Ok(Encoding(jserr!(hcid::with_hcs0())?)),
             _ => Err(JsValue::from_str(&format!(
                 "invalid encoding name: \"{}\"",
                 encoding_name

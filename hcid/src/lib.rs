@@ -10,6 +10,18 @@ use util::{b32_correct, cap_decode, cap_encode_bin, char_upper};
 /// hcid Result type
 pub type HcidResult<T> = Result<T, HcidError>;
 
+/* XXX
+ *
+ * HcK v0 hex:     0x389424
+ * HcK v1 hex:     0x389524
+ * HcA v0 hex:     0x388024
+ * HcA v1 hex:     0x388124
+ * HcS v0 hex:     0x38a224
+ * HcS v1 hex:     0x38a324
+ *
+ * XXX
+ */
+
 /// create a hck0 encoding instance
 /// version zero of keys prefixed with `HcK`
 pub fn with_hck0() -> HcidResult<HcidEncoding> {
@@ -18,6 +30,34 @@ pub fn with_hck0() -> HcidResult<HcidEncoding> {
         base_parity_byte_count: 4,
         cap_parity_byte_count: 4,
         prefix: vec![0x38, 0x94, 0x24],
+        prefix_cap: b"101".to_vec(),
+        cap_segment_char_count: 15,
+        encoded_char_count: 63,
+    })
+}
+
+/// create a hca0 encoding instance
+/// version zero of keys prefixed with `HcA`
+pub fn with_hca0() -> HcidResult<HcidEncoding> {
+    HcidEncoding::new(HcidEncodingConfig {
+        key_byte_count: 32,
+        base_parity_byte_count: 4,
+        cap_parity_byte_count: 4,
+        prefix: vec![0x38, 0x80, 0x24],
+        prefix_cap: b"101".to_vec(),
+        cap_segment_char_count: 15,
+        encoded_char_count: 63,
+    })
+}
+
+/// create a hcs0 encoding instance
+/// version zero of keys prefixed with `HcS`
+pub fn with_hcs0() -> HcidResult<HcidEncoding> {
+    HcidEncoding::new(HcidEncodingConfig {
+        key_byte_count: 32,
+        base_parity_byte_count: 4,
+        cap_parity_byte_count: 4,
+        prefix: vec![0x38, 0xa2, 0x24],
         prefix_cap: b"101".to_vec(),
         cap_segment_char_count: 15,
         encoded_char_count: 63,
