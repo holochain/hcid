@@ -1,0 +1,1 @@
+import "../lib/encoding.test.js";
