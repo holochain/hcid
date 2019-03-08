@@ -19,7 +19,8 @@
     "text-encoding": "^0.7.0"
   },
   "scripts": {
-    "test": "standard lib/*.js && mocha lib/*.test.js",
+    "test": "standard lib/*.js && npm run test:node && npm run test:browser",
+    "test:node": "mocha lib/*.test.js",
     "test:browser": "karma start"
   },
   "devDependencies": {
