@@ -1,7 +1,8 @@
 /* tslint:disable */
 var wasm;
 
-const TextEncoder = require('util').TextEncoder;
+const encoding = require('text-encoding');
+const TextEncoder = encoding.TextEncoder;
 
 let cachedTextEncoder = new TextEncoder('utf-8');
 
@@ -31,7 +32,7 @@ function passArray8ToWasm(arg) {
     return ptr;
 }
 
-const TextDecoder = require('util').TextDecoder;
+const TextDecoder = encoding.TextDecoder;
 
 let cachedTextDecoder = new TextDecoder('utf-8');
 

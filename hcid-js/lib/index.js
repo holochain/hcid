@@ -1,5 +1,6 @@
 /* eslint camelcase:0 */
 
+require('text-encoding')
 const bindgen = require('./bindgen')
 
 function txError (fn) {

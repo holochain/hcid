@@ -15,9 +15,12 @@
     "erasure",
     "reed-solomon"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "text-encoding": "^0.7.0"
+  },
   "scripts": {
-    "test": "standard lib/*.js && mocha lib/*.test.js"
+    "test": "standard lib/*.js && mocha lib/*.test.js",
+    "test:browser": "karma start"
   },
   "devDependencies": {
     "chai": "^4.2.0",
