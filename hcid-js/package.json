@@ -42,5 +42,8 @@
     "ignore": [
       "lib/bindgen*"
     ]
+  },
+  "browser": {
+    "./lib/index.js": "./lib/browser/index.js"
   }
 }
