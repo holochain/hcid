@@ -1,7 +1,5 @@
 /* tslint:disable */
-var wasm;
-
-const TextEncoder = require('util').TextEncoder;
+import * as wasm from './bindgen_bg';
 
 let cachedTextEncoder = new TextEncoder('utf-8');
 
@@ -30,8 +28,6 @@ function passArray8ToWasm(arg) {
     WASM_VECTOR_LEN = arg.length;
     return ptr;
 }
-
-const TextDecoder = require('util').TextDecoder;
 
 let cachedTextDecoder = new TextDecoder('utf-8');
 
@@ -76,9 +72,9 @@ function addHeapObject(obj) {
     return idx;
 }
 
-module.exports.__wbindgen_string_new = function(p, l) {
+export function __wbindgen_string_new(p, l) {
     return addHeapObject(getStringFromWasm(p, l));
-};
+}
 
 function getObject(idx) { return heap[idx]; }
 
@@ -94,7 +90,7 @@ function takeObject(idx) {
     return ret;
 }
 
-module.exports.__wbindgen_rethrow = function(idx) { throw takeObject(idx); };
+export function __wbindgen_rethrow(idx) { throw takeObject(idx); }
 
 function freeEncoding(ptr) {
 
@@ -102,7 +98,7 @@ function freeEncoding(ptr) {
 }
 /**
 */
-class Encoding {
+export class Encoding {
 
     free() {
         const ptr = this.ptr;
@@ -193,10 +189,8 @@ class Encoding {
 
     }
 }
-module.exports.Encoding = Encoding;
 
-module.exports.__wbindgen_throw = function(ptr, len) {
+export function __wbindgen_throw(ptr, len) {
     throw new Error(getStringFromWasm(ptr, len));
-};
+}
 
-wasm = require('./bindgen_bg');

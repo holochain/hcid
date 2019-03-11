@@ -1,5 +1,6 @@
 
-const bytes = require('fs').readFileSync(__dirname + '/bindgen_bg.wasm');
+const path = require('path').join(__dirname, 'bindgen_bg.wasm');
+const bytes = require('fs').readFileSync(path);
 let imports = {};
 imports['./bindgen'] = require('./bindgen');
 
