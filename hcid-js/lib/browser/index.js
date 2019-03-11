@@ -1,6 +1,7 @@
 /* eslint camelcase:0 */
 
-const bindgen = require('./bindgen')
+import * as bindgen from './bindgen'
+import { booted } from './bindgen_bg'
 
 function txError (fn) {
   try {
@@ -19,32 +20,41 @@ function checkFixBuffer (buf) {
 
 class Encoding {
   constructor (encoding_name) {
-    if (typeof encoding_name !== 'string') {
-      throw new Error('encoding_name must be a string')
-    }
-    this._raw = txError(() => new bindgen.Encoding(encoding_name))
+    return booted.then(() => {
+      if (typeof encoding_name !== 'string') {
+        throw new Error('encoding_name must be a string')
+      }
+      this._raw = txError(() => new bindgen.Encoding(encoding_name))
+      return this
+    })
   }
 
   encode (data) {
-    data = checkFixBuffer(data)
-    if (!(data instanceof Uint8Array)) {
-      throw new Error('data must be a Uint8Array')
-    }
-    return txError(() => this._raw.encode(data))
+    return booted.then(() => {
+      data = checkFixBuffer(data)
+      if (!(data instanceof Uint8Array)) {
+        throw new Error('data must be a Uint8Array')
+      }
+      return txError(() => this._raw.encode(data))
+    })
   }
 
   decode (data) {
-    if (typeof data !== 'string') {
-      throw new Error('data must be a string')
-    }
-    return txError(() => this._raw.decode(data))
+    return booted.then(() => {
+      if (typeof data !== 'string') {
+        throw new Error('data must be a string')
+      }
+      return txError(() => this._raw.decode(data))
+    })
   }
 
   is_corrupt (data) {
-    if (typeof data !== 'string') {
-      throw new Error('data must be a string')
-    }
-    return txError(() => this._raw.is_corrupt(data))
+    return booted.then(() => {
+      if (typeof data !== 'string') {
+        throw new Error('data must be a string')
+      }
+      return txError(() => this._raw.is_corrupt(data))
+    })
   }
 }
 

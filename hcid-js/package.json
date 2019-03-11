@@ -16,6 +16,7 @@
     "reed-solomon"
   ],
   "dependencies": {
+    "@babel/plugin-transform-runtime": "^7.3.4",
     "text-encoding": "^0.7.0"
   },
   "scripts": {
@@ -24,6 +25,7 @@
     "test:browser": "karma start"
   },
   "devDependencies": {
+    "@babel/core": "^7.3.4",
     "chai": "^4.2.0",
     "karma": "^4.0.1",
     "karma-chai": "^0.1.0",
