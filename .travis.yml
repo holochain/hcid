@@ -16,11 +16,5 @@ before_install:
   - export PATH="$HOME/.cargo/bin:$PATH"
   - source "$HOME/.cargo/env"
 
-before_script:
-  # Setup xvfb so the browsers can launch
-  - "export DISPLAY=:99.0"
-  - sh -e /etc/init.d/xvfb start
-  - sleep 3 # give xvfb some time to start
-
 script:
   - make test
