@@ -16,8 +16,8 @@ describe('Encoding Suite', () => {
       describe(type, () => {
         let enc = null
 
-        beforeEach(() => {
-          enc = new Encoding(type)
+        beforeEach(async () => {
+          enc = await new Encoding(type)
         })
 
         afterEach(() => {
@@ -92,8 +92,8 @@ describe('Encoding Suite', () => {
   describe('basic', () => {
     let enc = null
 
-    beforeEach(() => {
-      enc = new Encoding('hck0')
+    beforeEach(async () => {
+      enc = await new Encoding('hck0')
     })
 
     afterEach(() => {

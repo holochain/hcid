@@ -15,13 +15,26 @@
     "erasure",
     "reed-solomon"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "text-encoding": "^0.7.0"
+  },
   "scripts": {
-    "test": "standard lib/*.js && mocha lib/*.test.js"
+    "test": "standard lib/*.js && npm run test:node && npm run test:browser",
+    "test:node": "mocha lib/*.test.js",
+    "test:browser": "karma start"
   },
   "devDependencies": {
+    "@babel/core": "^7.3.4",
+    "@babel/plugin-transform-runtime": "^7.3.4",
     "chai": "^4.2.0",
+    "karma": "^4.0.1",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-firefox-launcher": "^1.1.0",
+    "karma-mocha": "^1.3.0",
+    "karma-parcel": "^0.4.0",
     "mocha": "^5.2.0",
+    "parcel-bundler": "^1.12.0",
     "standard": "^12.0.1"
   },
   "standard": {
@@ -29,7 +42,11 @@
       "mocha": true
     },
     "ignore": [
-      "lib/bindgen*"
+      "lib/bindgen*",
+      "lib/browser/bindgen*"
     ]
+  },
+  "browser": {
+    "./lib/index.js": "./lib/browser/index.js"
   }
 }
