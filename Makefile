@@ -4,7 +4,7 @@ SHELL		= /bin/bash
 
 all: build
 
-test: build
+test: build build_web
 	RUST_BACKTRACE=1 cargo test -p hcid -- --nocapture
 	cd hcid-js && (which node_modules/.bin/standard || npm ci) && npm test
 

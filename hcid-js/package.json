@@ -42,7 +42,8 @@
       "mocha": true
     },
     "ignore": [
-      "lib/bindgen*"
+      "lib/bindgen*",
+      "lib/browser/bindgen*"
     ]
   },
   "browser": {
