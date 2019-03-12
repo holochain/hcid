@@ -30,31 +30,25 @@ class Encoding {
   }
 
   encode (data) {
-    return booted.then(() => {
-      data = checkFixBuffer(data)
-      if (!(data instanceof Uint8Array)) {
-        throw new Error('data must be a Uint8Array')
-      }
-      return txError(() => this._raw.encode(data))
-    })
+    data = checkFixBuffer(data)
+    if (!(data instanceof Uint8Array)) {
+      throw new Error('data must be a Uint8Array')
+    }
+    return txError(() => this._raw.encode(data))
   }
 
   decode (data) {
-    return booted.then(() => {
-      if (typeof data !== 'string') {
-        throw new Error('data must be a string')
-      }
-      return txError(() => this._raw.decode(data))
-    })
+    if (typeof data !== 'string') {
+      throw new Error('data must be a string')
+    }
+    return txError(() => this._raw.decode(data))
   }
 
   is_corrupt (data) {
-    return booted.then(() => {
-      if (typeof data !== 'string') {
-        throw new Error('data must be a string')
-      }
-      return txError(() => this._raw.is_corrupt(data))
-    })
+    if (typeof data !== 'string') {
+      throw new Error('data must be a string')
+    }
+    return txError(() => this._raw.is_corrupt(data))
   }
 }
 

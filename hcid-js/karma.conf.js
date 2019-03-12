@@ -16,7 +16,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
         {
-            pattern: 'lib/browser/*.test.js',
+            pattern: 'lib/**/*.test.js',
             watched: false,
             included: false
         }
@@ -31,7 +31,7 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-        'lib/browser/*.test.js': ['parcel']
+        'lib/**/*.test.js': ['parcel']
     },
 
 
