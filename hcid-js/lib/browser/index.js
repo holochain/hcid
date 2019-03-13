@@ -18,7 +18,7 @@ function checkFixBuffer (buf) {
   return buf
 }
 
-class Encoding {
+export class Encoding {
   constructor (encoding_name) {
     return booted.then(() => {
       if (typeof encoding_name !== 'string') {
@@ -51,5 +51,3 @@ class Encoding {
     return txError(() => this._raw.is_corrupt(data))
   }
 }
-
-exports.Encoding = Encoding
