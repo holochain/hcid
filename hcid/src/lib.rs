@@ -2,13 +2,10 @@ extern crate reed_solomon;
 
 mod error;
 mod b32;
-pub use error::HcidError;
+pub use error::{HcidError, HcidResult};
 
 mod util;
 use util::{b32_correct, cap_decode, cap_encode_bin, char_upper};
-
-/// hcid Result type
-pub type HcidResult<T> = Result<T, HcidError>;
 
 /* XXX
  *
@@ -103,7 +100,6 @@ impl HcidEncoding {
         );
 
         Ok(Self {
-            //b32,
             config,
             rs_enc,
             rs_dec,
@@ -133,7 +129,6 @@ impl HcidEncoding {
         );
 
         // do the base32 encoding
-        //let mut base32 = self.b32.encode(&base).into_bytes();
         let mut base32 = b32::encode(&base);
 
         if base32.len() != self.config.encoded_char_count {
@@ -288,8 +283,7 @@ impl HcidEncoding {
         }
 
         // do the base32 decode
-        //let mut data = self.b32.decode(&data)?;
-        let mut data = b32::decode(&data);
+        let mut data = b32::decode(&data)?;
 
         if &data[0..self.config.prefix.len()] != self.config.prefix.as_slice() {
             return Err(HcidError(String::from("PrefixMismatch")));

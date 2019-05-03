@@ -2,6 +2,9 @@
 #[derive(Debug, PartialEq, Clone)]
 pub struct HcidError(pub String);
 
+/// hcid Result type
+pub type HcidResult<T> = Result<T, HcidError>;
+
 impl std::fmt::Display for HcidError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{:?}", self)
@@ -14,6 +17,12 @@ impl std::error::Error for HcidError {
     }
     fn cause(&self) -> Option<&std::error::Error> {
         None
+    }
+}
+
+impl<'a> From<&'a str> for HcidError {
+    fn from(error: &'a str) -> Self {
+        Self(error.to_string())
     }
 }
 
