@@ -2,6 +2,9 @@
 #[derive(Debug, PartialEq, Clone)]
 pub struct HcidError(pub String);
 
+/// hcid Result type
+pub type HcidResult<T> = Result<T, HcidError>;
+
 impl std::fmt::Display for HcidError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{:?}", self)
@@ -17,15 +20,15 @@ impl std::error::Error for HcidError {
     }
 }
 
-impl From<data_encoding::SpecificationError> for HcidError {
-    fn from(error: data_encoding::SpecificationError) -> Self {
-        Self(format!("{:?}", error))
+impl From<String> for HcidError {
+    fn from(error: String) -> Self {
+        Self(error)
     }
 }
 
-impl From<data_encoding::DecodeError> for HcidError {
-    fn from(error: data_encoding::DecodeError) -> Self {
-        Self(format!("{:?}", error))
+impl<'a> From<&'a str> for HcidError {
+    fn from(error: &'a str) -> Self {
+        Self(error.to_string())
     }
 }
 

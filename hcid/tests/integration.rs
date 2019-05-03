@@ -1,11 +1,6 @@
 extern crate serde_json;
-extern crate data_encoding;
 extern crate hcid;
-
-use data_encoding::HEXLOWER_PERMISSIVE as hex;
-fn read_hex(h: &str) -> Vec<u8> {
-    hex.decode(h.as_bytes()).unwrap()
-}
+extern crate hex;
 
 static FIXTURES: &'static str = include_str!("../../test/fixtures.json");
 
@@ -45,13 +40,13 @@ fn test(e: &hcid::HcidEncoding, test: &serde_json::Value) {
 
     for t in test["correct"].as_array().unwrap().iter() {
         let id = String::from(t[0].as_str().unwrap());
-        let data = read_hex(&String::from(t[1].as_str().unwrap()));
+        let data = hex::decode(&String::from(t[1].as_str().unwrap())).unwrap();
         test_correct(e, &id, &data);
     }
 
     for t in test["correctable"].as_array().unwrap().iter() {
         let id = String::from(t[0].as_str().unwrap());
-        let data = read_hex(&String::from(t[1].as_str().unwrap()));
+        let data = hex::decode(&String::from(t[1].as_str().unwrap())).unwrap();
         let correct_id = String::from(t[2].as_str().unwrap());
         test_correctable(e, &id, &data, &correct_id);
     }
@@ -63,7 +58,7 @@ fn test(e: &hcid::HcidEncoding, test: &serde_json::Value) {
     }
 
     for t in test["errantData"].as_array().unwrap().iter() {
-        let data = read_hex(&String::from(t[0].as_str().unwrap()));
+        let data = hex::decode(&String::from(t[0].as_str().unwrap())).unwrap();
         let err = String::from(t[1].as_str().unwrap());
         test_errant_data(e, &data, &err);
     }
@@ -74,12 +69,12 @@ fn it_can_execute_fixtures() {
     let fixtures: serde_json::Value = serde_json::from_str(FIXTURES).unwrap();
     let fixtures = fixtures.as_object().unwrap();
 
-    let e = hcid::with_hck0().unwrap();
+    let e = hcid::HcidEncoding::with_kind("hck0").unwrap();
     test(&e, &fixtures["hck0"]);
 
-    let e = hcid::with_hca0().unwrap();
+    let e = hcid::HcidEncoding::with_kind("hca0").unwrap();
     test(&e, &fixtures["hca0"]);
 
-    let e = hcid::with_hcs0().unwrap();
+    let e = hcid::HcidEncoding::with_kind("hcs0").unwrap();
     test(&e, &fixtures["hcs0"]);
 }

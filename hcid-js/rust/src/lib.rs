@@ -1,5 +1,10 @@
 extern crate hcid;
 extern crate wasm_bindgen;
+extern crate wee_alloc;
+
+// Use `wee_alloc` as the global allocator.
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 use wasm_bindgen::prelude::*;
 
@@ -20,15 +25,7 @@ pub struct Encoding(hcid::HcidEncoding);
 impl Encoding {
     #[wasm_bindgen(constructor)]
     pub fn new(encoding_name: &str) -> JsResult<Encoding> {
-        match encoding_name {
-            "hck0" => Ok(Encoding(jserr!(hcid::with_hck0())?)),
-            "hca0" => Ok(Encoding(jserr!(hcid::with_hca0())?)),
-            "hcs0" => Ok(Encoding(jserr!(hcid::with_hcs0())?)),
-            _ => Err(JsValue::from_str(&format!(
-                "invalid encoding name: \"{}\"",
-                encoding_name
-            ))),
-        }
+        Ok(Encoding(jserr!(hcid::HcidEncoding::with_kind(encoding_name))?))
     }
 
     pub fn encode(&self, data: &[u8]) -> JsResult<String> {

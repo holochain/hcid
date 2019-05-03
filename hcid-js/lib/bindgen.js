@@ -1,4 +1,3 @@
-/* tslint:disable */
 var wasm;
 
 const TextEncoder = require('util').TextEncoder;
@@ -15,13 +14,36 @@ function getUint8Memory() {
 
 let WASM_VECTOR_LEN = 0;
 
-function passStringToWasm(arg) {
+let passStringToWasm;
+if (typeof cachedTextEncoder.encodeInto === 'function') {
+    passStringToWasm = function(arg) {
 
-    const buf = cachedTextEncoder.encode(arg);
-    const ptr = wasm.__wbindgen_malloc(buf.length);
-    getUint8Memory().set(buf, ptr);
-    WASM_VECTOR_LEN = buf.length;
-    return ptr;
+        let size = arg.length;
+        let ptr = wasm.__wbindgen_malloc(size);
+        let writeOffset = 0;
+        while (true) {
+            const view = getUint8Memory().subarray(ptr + writeOffset, ptr + size);
+            const { read, written } = cachedTextEncoder.encodeInto(arg, view);
+            arg = arg.substring(read);
+            writeOffset += written;
+            if (arg.length === 0) {
+                break;
+            }
+            ptr = wasm.__wbindgen_realloc(ptr, size, size * 2);
+            size *= 2;
+        }
+        WASM_VECTOR_LEN = writeOffset;
+        return ptr;
+    };
+} else {
+    passStringToWasm = function(arg) {
+
+        const buf = cachedTextEncoder.encode(arg);
+        const ptr = wasm.__wbindgen_malloc(buf.length);
+        getUint8Memory().set(buf, ptr);
+        WASM_VECTOR_LEN = buf.length;
+        return ptr;
+    };
 }
 
 function passArray8ToWasm(arg) {
@@ -76,9 +98,7 @@ function addHeapObject(obj) {
     return idx;
 }
 
-module.exports.__wbindgen_string_new = function(p, l) {
-    return addHeapObject(getStringFromWasm(p, l));
-};
+module.exports.__wbindgen_string_new = function(p, l) { return addHeapObject(getStringFromWasm(p, l)); };
 
 function getObject(idx) { return heap[idx]; }
 
@@ -96,6 +116,10 @@ function takeObject(idx) {
 
 module.exports.__wbindgen_rethrow = function(idx) { throw takeObject(idx); };
 
+module.exports.__wbindgen_throw = function(ptr, len) {
+    throw new Error(getStringFromWasm(ptr, len));
+};
+
 function freeEncoding(ptr) {
 
     wasm.__wbg_encoding_free(ptr);
@@ -111,11 +135,11 @@ class Encoding {
     }
 
     /**
-    * @param {string} arg0
+    * @param {string} encoding_name
     * @returns {}
     */
-    constructor(arg0) {
-        const ptr0 = passStringToWasm(arg0);
+    constructor(encoding_name) {
+        const ptr0 = passStringToWasm(encoding_name);
         const len0 = WASM_VECTOR_LEN;
         try {
             this.ptr = wasm.encoding_new(ptr0, len0);
@@ -127,11 +151,11 @@ class Encoding {
 
     }
     /**
-    * @param {Uint8Array} arg0
+    * @param {Uint8Array} data
     * @returns {string}
     */
-    encode(arg0) {
-        const ptr0 = passArray8ToWasm(arg0);
+    encode(data) {
+        const ptr0 = passArray8ToWasm(data);
         const len0 = WASM_VECTOR_LEN;
         const retptr = globalArgumentPtr();
         try {
@@ -152,11 +176,11 @@ class Encoding {
 
     }
     /**
-    * @param {string} arg0
+    * @param {string} data
     * @returns {Uint8Array}
     */
-    decode(arg0) {
-        const ptr0 = passStringToWasm(arg0);
+    decode(data) {
+        const ptr0 = passStringToWasm(data);
         const len0 = WASM_VECTOR_LEN;
         const retptr = globalArgumentPtr();
         try {
@@ -177,11 +201,11 @@ class Encoding {
 
     }
     /**
-    * @param {string} arg0
+    * @param {string} data
     * @returns {boolean}
     */
-    is_corrupt(arg0) {
-        const ptr0 = passStringToWasm(arg0);
+    is_corrupt(data) {
+        const ptr0 = passStringToWasm(data);
         const len0 = WASM_VECTOR_LEN;
         try {
             return (wasm.encoding_is_corrupt(this.ptr, ptr0, len0)) !== 0;
@@ -195,8 +219,7 @@ class Encoding {
 }
 module.exports.Encoding = Encoding;
 
-module.exports.__wbindgen_throw = function(ptr, len) {
-    throw new Error(getStringFromWasm(ptr, len));
-};
+module.exports.__wbindgen_object_drop_ref = function(i) { dropObject(i); };
 
 wasm = require('./bindgen_bg');
+

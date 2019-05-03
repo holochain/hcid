@@ -1,6 +1,6 @@
 [package]
 name = "hcid_js"
-version = "0.0.3-alpha"
+version = "0.0.6"
 license = "Apache-2.0"
 
 [lib]
@@ -9,4 +9,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 hcid = { path = "../../hcid" }
-wasm-bindgen = "=0.2.33"
+wasm-bindgen = "=0.2.40"
+wee_alloc = "=0.4.4"

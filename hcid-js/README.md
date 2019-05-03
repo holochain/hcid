@@ -5,7 +5,10 @@ Generate Holochain IDs in javascript. A thin wrapper around rust compiled to WAS
 ## Installation
 
 This package is distributed via npm and can be installed using
-`npm install @holochain/hcid`
+
+```
+npm install @holochain/hcid-js
+```
 
 ## Usage
 

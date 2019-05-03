@@ -89,6 +89,16 @@ describe('Encoding Suite', () => {
     }
   })
 
+  it('should error on bad kind', async () => {
+    try {
+      await new Encoding('bad')
+    } catch (e) {
+      expect(e.toString()).contains('invalid kind')
+      return
+    }
+    throw new Error('expected exception, got success')
+  })
+
   describe('basic', () => {
     let enc = null
 
