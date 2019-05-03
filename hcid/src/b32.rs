@@ -7,7 +7,7 @@ const MASK: usize = 31;
 static ALPHABET: &'static [u8] = b"ABCDEFGHIJKMNOPQRSTUVWXYZ3456789";
 
 /// reverse lookup table for alphabet positioning (ascii - 51)
-static REV_LOOKUP: &'static [usize] = &[
+static REV_LOOKUP: &'static [u8] = &[
     25, 26, 27, 28, 29, 30, 31,         // 0, 1, 2, 3, 4, 5, 6,
     255, 255, 255, 255, 255, 255, 255,  // 7, 8, 9, 10, 11, 12, 13,
     0, 1, 2, 3, 4, 5, 6,                // 14, 15, 16, 17, 18, 19, 20,
@@ -53,7 +53,7 @@ pub fn decode (data: &[u8]) -> crate::HcidResult<Vec<u8>> {
             return Err("bad input".into());
         }
 
-        let v = REV_LOOKUP[(c - 51) as usize];
+        let v: usize = REV_LOOKUP[(c - 51) as usize] as usize;
 
         if v == 255 {
             return Err("bad input".into());

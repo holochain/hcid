@@ -4,3 +4,7 @@ members = [
   "hcid",
   "hcid-js/rust",
 ]
+
+[profile.release]
+lto = true
+opt-level = 's'

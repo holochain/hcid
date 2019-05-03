@@ -1,3 +1,19 @@
+//! Holochain HCID base32 encoding utility.
+//!
+//! # Example
+//!
+//! ```
+//! extern crate hcid;
+//!
+//! fn main() {
+//!     let enc = hcid::HcidEncoding::with_kind("hcs0").unwrap();
+//!     let key = enc.encode(&[0; 32]).unwrap();
+//!     assert_eq!("HcSciaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", key);
+//!     let buffer = enc.decode(&key).unwrap();
+//!     assert_eq!([0; 32].to_vec(), buffer);
+//! }
+//! ```
+
 extern crate reed_solomon;
 
 mod error;
