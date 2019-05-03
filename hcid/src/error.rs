@@ -17,18 +17,6 @@ impl std::error::Error for HcidError {
     }
 }
 
-impl From<data_encoding::SpecificationError> for HcidError {
-    fn from(error: data_encoding::SpecificationError) -> Self {
-        Self(format!("{:?}", error))
-    }
-}
-
-impl From<data_encoding::DecodeError> for HcidError {
-    fn from(error: data_encoding::DecodeError) -> Self {
-        Self(format!("{:?}", error))
-    }
-}
-
 impl From<reed_solomon::DecoderError> for HcidError {
     fn from(error: reed_solomon::DecoderError) -> Self {
         Self(format!("{:?}", error))

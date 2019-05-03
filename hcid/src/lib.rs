@@ -1,7 +1,7 @@
-extern crate data_encoding;
 extern crate reed_solomon;
 
 mod error;
+mod b32;
 pub use error::HcidError;
 
 mod util;
@@ -84,7 +84,6 @@ pub struct HcidEncodingConfig {
 
 /// an instance that can encode / decode a particular hcid encoding configuration
 pub struct HcidEncoding {
-    b32: data_encoding::Encoding,
     config: HcidEncodingConfig,
     rs_enc: reed_solomon::Encoder,
     rs_dec: reed_solomon::Decoder,
@@ -93,11 +92,6 @@ pub struct HcidEncoding {
 impl HcidEncoding {
     /// create a new HcidEncoding instance from given HcidEncodingConfig
     pub fn new(config: HcidEncodingConfig) -> HcidResult<Self> {
-        // set up a base32 encoder for our holo alphabet
-        let mut spec = data_encoding::Specification::new();
-        spec.symbols.push_str("ABCDEFGHIJKMNOPQRSTUVWXYZ3456789");
-        let b32 = spec.encoding()?;
-
         // set up a reed-solomon encoder with proper parity count
         let rs_enc = reed_solomon::Encoder::new(
             config.base_parity_byte_count + config.cap_parity_byte_count,
@@ -109,7 +103,7 @@ impl HcidEncoding {
         );
 
         Ok(Self {
-            b32,
+            //b32,
             config,
             rs_enc,
             rs_dec,
@@ -139,7 +133,8 @@ impl HcidEncoding {
         );
 
         // do the base32 encoding
-        let mut base32 = self.b32.encode(&base).into_bytes();
+        //let mut base32 = self.b32.encode(&base).into_bytes();
+        let mut base32 = b32::encode(&base);
 
         if base32.len() != self.config.encoded_char_count {
             return Err(HcidError(String::from(format!(
@@ -293,7 +288,8 @@ impl HcidEncoding {
         }
 
         // do the base32 decode
-        let mut data = self.b32.decode(&data)?;
+        //let mut data = self.b32.decode(&data)?;
+        let mut data = b32::decode(&data);
 
         if &data[0..self.config.prefix.len()] != self.config.prefix.as_slice() {
             return Err(HcidError(String::from("PrefixMismatch")));
@@ -332,8 +328,6 @@ impl HcidEncoding {
 
 #[cfg(test)]
 mod tests {
-    use data_encoding::HEXLOWER_PERMISSIVE as hex;
-
     use super::*;
 
     static TEST_HEX_1: &'static str =
@@ -345,7 +339,7 @@ mod tests {
     fn it_encodes_1() {
         let enc = with_hck0().unwrap();
 
-        let input = hex.decode(TEST_HEX_1.as_bytes()).unwrap();
+        let input = hex::decode(TEST_HEX_1.as_bytes()).unwrap();
         let id = enc.encode(&input).unwrap();
         assert_eq!(TEST_ID_1, id);
     }
@@ -354,7 +348,7 @@ mod tests {
     fn it_decodes_1() {
         let enc = with_hck0().unwrap();
 
-        let data = hex.encode(&enc.decode(TEST_ID_1).unwrap());
+        let data = hex::encode(&enc.decode(TEST_ID_1).unwrap());
         assert_eq!(TEST_HEX_1, data);
     }
 }
