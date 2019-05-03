@@ -69,12 +69,12 @@ fn it_can_execute_fixtures() {
     let fixtures: serde_json::Value = serde_json::from_str(FIXTURES).unwrap();
     let fixtures = fixtures.as_object().unwrap();
 
-    let e = hcid::with_hck0().unwrap();
+    let e = hcid::HcidEncoding::with_kind("hck0").unwrap();
     test(&e, &fixtures["hck0"]);
 
-    let e = hcid::with_hca0().unwrap();
+    let e = hcid::HcidEncoding::with_kind("hca0").unwrap();
     test(&e, &fixtures["hca0"]);
 
-    let e = hcid::with_hcs0().unwrap();
+    let e = hcid::HcidEncoding::with_kind("hcs0").unwrap();
     test(&e, &fixtures["hcs0"]);
 }

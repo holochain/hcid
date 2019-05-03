@@ -2,7 +2,7 @@ SHELL		= /bin/bash
 
 .PHONY: all test tools build clean
 
-all: build
+all: build build_web
 
 test: build build_web
 	RUST_BACKTRACE=1 cargo test -p hcid -- --nocapture
@@ -11,7 +11,7 @@ test: build build_web
 tools:
 	rustup override set nightly-2019-01-24
 	rustup target add wasm32-unknown-unknown
-	which wasm-bindgen || cargo install --force wasm-bindgen-cli --version "=0.2.33"
+	if ! (which wasm-bindgen) || [ "$(shell wasm-bindgen --version)" != "wasm-bindgen 0.2.40" ]; then cargo install --force wasm-bindgen-cli --version "=0.2.40"; fi
 
 build: tools
 	cargo build -p hcid --release
@@ -24,4 +24,4 @@ build_web: build
 	rm hcid-js/lib/browser/bindgen_bg.wasm
 
 clean:
-	rm -rf hcid-js/rust/target hcid-js/lib/bindgen_bg.wasm
+	rm -rf target hcid-js/rust/target hcid-js/lib/bindgen_bg.wasm

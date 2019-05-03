@@ -7,6 +7,66 @@ pub use error::{HcidError, HcidResult};
 mod util;
 use util::{b32_correct, cap_decode, cap_encode_bin, char_upper};
 
+static HC_CODE_MAP: &'static [[u8; 2]] = &[
+    [ 0xb2, 0xff ], // 51: hc30, reserved
+    [ 0xb4, 0xff ], // 52: hc40, reserved
+    [ 0xb6, 0xff ], // 53: hc50, reserved
+    [ 0xb8, 0xff ], // 54: hc60, reserved
+    [ 0xba, 0xff ], // 55: hc70, reserved
+    [ 0xbc, 0xff ], // 56: hc80, reserved
+    [ 0xbe, 0xff ], // 57: hc90, reserved
+
+    // 58-61: reserved
+    [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ],
+    // 62-65: reserved
+    [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ],
+    // 66-69: reserved
+    [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ],
+    // 70-73: reserved
+    [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ],
+    // 74-77: reserved
+    [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ],
+    // 78-81: reserved
+    [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ],
+    // 82-85: reserved
+    [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ],
+    // 86-89: reserved
+    [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ],
+    // 90-93: reserved
+    [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ],
+    // 94-96: reserved
+    [ 0xff, 0xff ], [ 0xff, 0xff ], [ 0xff, 0xff ],
+
+    [ 0x80, 0xff ], // 97: hca0, reserved
+    [ 0x82, 0xff ], // 98: hcb0, reserved
+    [ 0x84, 0xff ], // 99: hcc0, reserved
+    [ 0x86, 0xff ], // 100: hcd0, reserved
+    [ 0x88, 0xff ], // 101: hce0, reserved
+    [ 0x8a, 0xff ], // 102: hcf0, reserved
+    [ 0x8c, 0xff ], // 103: hcg0, reserved
+    [ 0x8e, 0xff ], // 104: hch0, reserved
+    [ 0x90, 0xff ], // 105: hci0, reserved
+    [ 0x92, 0xff ], // 106: hcj0, reserved
+    [ 0x94, 0xff ], // 107: hck0, reserved
+
+    [ 0xff, 0xff ], // 108: reserved, reserved
+
+    [ 0x96, 0xff ], // 109: hcm0, reserved
+    [ 0x98, 0xff ], // 110: hcn0, reserved
+    [ 0x9a, 0xff ], // 111: hco0, reserved
+    [ 0x9c, 0xff ], // 112: hcp0, reserved
+    [ 0x9e, 0xff ], // 113: hcq0, reserved
+    [ 0xa0, 0xff ], // 114: hcr0, reserved
+    [ 0xa2, 0xff ], // 115: hcs0, reserved
+    [ 0xa4, 0xff ], // 116: hct0, reserved
+    [ 0xa6, 0xff ], // 117: hcu0, reserved
+    [ 0xa8, 0xff ], // 118: hcv0, reserved
+    [ 0xaa, 0xff ], // 119: hcw0, reserved
+    [ 0xad, 0xff ], // 120: hcx0, reserved
+    [ 0xae, 0xff ], // 121: hcy0, reserved
+    [ 0xb0, 0xff ], // 122: hcz0, reserved
+];
+
 /* XXX
  *
  * HcK v0 hex:     0x389424
@@ -18,48 +78,6 @@ use util::{b32_correct, cap_decode, cap_encode_bin, char_upper};
  *
  * XXX
  */
-
-/// create a hck0 encoding instance
-/// version zero of keys prefixed with `HcK`
-pub fn with_hck0() -> HcidResult<HcidEncoding> {
-    HcidEncoding::new(HcidEncodingConfig {
-        key_byte_count: 32,
-        base_parity_byte_count: 4,
-        cap_parity_byte_count: 4,
-        prefix: vec![0x38, 0x94, 0x24],
-        prefix_cap: b"101".to_vec(),
-        cap_segment_char_count: 15,
-        encoded_char_count: 63,
-    })
-}
-
-/// create a hca0 encoding instance
-/// version zero of keys prefixed with `HcA`
-pub fn with_hca0() -> HcidResult<HcidEncoding> {
-    HcidEncoding::new(HcidEncodingConfig {
-        key_byte_count: 32,
-        base_parity_byte_count: 4,
-        cap_parity_byte_count: 4,
-        prefix: vec![0x38, 0x80, 0x24],
-        prefix_cap: b"101".to_vec(),
-        cap_segment_char_count: 15,
-        encoded_char_count: 63,
-    })
-}
-
-/// create a hcs0 encoding instance
-/// version zero of keys prefixed with `HcS`
-pub fn with_hcs0() -> HcidResult<HcidEncoding> {
-    HcidEncoding::new(HcidEncodingConfig {
-        key_byte_count: 32,
-        base_parity_byte_count: 4,
-        cap_parity_byte_count: 4,
-        prefix: vec![0x38, 0xa2, 0x24],
-        prefix_cap: b"101".to_vec(),
-        cap_segment_char_count: 15,
-        encoded_char_count: 63,
-    })
-}
 
 /// represents an encoding configuration for hcid rendering and parsing
 pub struct HcidEncodingConfig {
@@ -77,6 +95,44 @@ pub struct HcidEncodingConfig {
     pub cap_segment_char_count: usize,
     /// how many characters long the fully rendered base32 string should be
     pub encoded_char_count: usize,
+}
+
+impl HcidEncodingConfig {
+    /// create a new config given a kind token string
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate hcid;
+    /// let hca0 = hcid::HcidEncodingConfig::new("hca0").unwrap();
+    /// let hck0 = hcid::HcidEncodingConfig::new("hck0").unwrap();
+    /// let hcs0 = hcid::HcidEncodingConfig::new("hcs0").unwrap();
+    /// ```
+    pub fn new(kind: &str) -> HcidResult<Self> {
+        let kind_b = kind.as_bytes();
+        if kind_b.len() != 4 || kind_b[0] != 104 || kind_b[1] != 99 ||
+                (kind_b[3] != 48 && kind_b[3] != 49) ||
+                kind_b[2] < 51 || kind_b[2] > 122 {
+            return Err(format!("invalid kind: `{}`", kind).into());
+        }
+
+        let version = if kind_b[3] == 48 { 0 } else { 1 };
+        let res = HC_CODE_MAP[(kind_b[2] - 51) as usize][version as usize];
+
+        if res == 0xff {
+            return Err(format!("invalid kind: `{}`", kind).into());
+        }
+
+        Ok(HcidEncodingConfig {
+            key_byte_count: 32,
+            base_parity_byte_count: 4,
+            cap_parity_byte_count: 4,
+            prefix: vec![0x38, res, 0x24],
+            prefix_cap: b"101".to_vec(),
+            cap_segment_char_count: 15,
+            encoded_char_count: 63,
+        })
+    }
 }
 
 /// an instance that can encode / decode a particular hcid encoding configuration
@@ -104,6 +160,20 @@ impl HcidEncoding {
             rs_enc,
             rs_dec,
         })
+    }
+
+    /// create a new config given a kind token string
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate hcid;
+    /// let hca0 = hcid::HcidEncoding::with_kind("hca0").unwrap();
+    /// let hck0 = hcid::HcidEncoding::with_kind("hck0").unwrap();
+    /// let hcs0 = hcid::HcidEncoding::with_kind("hcs0").unwrap();
+    /// ```
+    pub fn with_kind(kind: &str) -> HcidResult<Self> {
+        HcidEncoding::new(HcidEncodingConfig::new(kind)?)
     }
 
     /// encode a string to base32 with this instance's configuration
@@ -331,7 +401,7 @@ mod tests {
 
     #[test]
     fn it_encodes_1() {
-        let enc = with_hck0().unwrap();
+        let enc = HcidEncoding::with_kind("hck0").unwrap();
 
         let input = hex::decode(TEST_HEX_1.as_bytes()).unwrap();
         let id = enc.encode(&input).unwrap();
@@ -340,7 +410,7 @@ mod tests {
 
     #[test]
     fn it_decodes_1() {
-        let enc = with_hck0().unwrap();
+        let enc = HcidEncoding::with_kind("hck0").unwrap();
 
         let data = hex::encode(&enc.decode(TEST_ID_1).unwrap());
         assert_eq!(TEST_HEX_1, data);

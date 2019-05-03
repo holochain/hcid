@@ -20,6 +20,12 @@ impl std::error::Error for HcidError {
     }
 }
 
+impl From<String> for HcidError {
+    fn from(error: String) -> Self {
+        Self(error)
+    }
+}
+
 impl<'a> From<&'a str> for HcidError {
     fn from(error: &'a str) -> Self {
         Self(error.to_string())
