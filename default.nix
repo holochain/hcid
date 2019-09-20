@@ -23,7 +23,6 @@ with pkgs;
     src = gitignoreSource hcid-js/.;
     
     nativeBuildInputs = [
-      rustup
       holochain-cli
       holochain-conductor
       nodejs-12_x
@@ -36,7 +35,7 @@ with pkgs;
     '';
     
     buildPhase = ''
-      cargo build -p hcid --release
+      #cargo build -p hcid --release
       cargo build -p hcid_js --target wasm32-unknown-unknown --release
       wasm-bindgen target/wasm32-unknown-unknown/release/hcid_js.wasm --out-dir hcid-js/lib --out-name bindgen --nodejs --no-typescript
     '';

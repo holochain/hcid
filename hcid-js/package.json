@@ -1,6 +1,6 @@
 {
   "name": "@holochain/hcid-js",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "javascript (wasm) build for rust Holochain base32 encoding scheme for keys, agents, identifiers, etc",
   "main": "lib/index.js",
   "license": "Apache-2.0",
