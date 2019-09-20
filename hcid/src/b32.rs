@@ -116,6 +116,6 @@ mod tests {
     fn it_should_error_on_bad_decode() {
         assert_eq!(
             "HcidError(\"bad input\")",
-            &format!("{}", decode(b"A%BAGBASWMGA").unwrap_err()));
+            &format!("{:?}", decode(b"A%BAGBASWMGA").unwrap_err()));
     }
 }

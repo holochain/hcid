@@ -15,6 +15,7 @@
 //! ```
 
 extern crate reed_solomon;
+extern crate hex;
 
 mod error;
 mod b32;

@@ -5,9 +5,10 @@ pub struct HcidError(pub String);
 /// hcid Result type
 pub type HcidResult<T> = Result<T, HcidError>;
 
+/// Display yields the plain error String; Debug wraps with type name
 impl std::fmt::Display for HcidError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{}", self.0)
     }
 }
 
@@ -15,7 +16,7 @@ impl std::error::Error for HcidError {
     fn description(&self) -> &str {
         &self.0
     }
-    fn cause(&self) -> Option<&std::error::Error> {
+    fn cause(&self) -> Option<&dyn std::error::Error> {
         None
     }
 }
